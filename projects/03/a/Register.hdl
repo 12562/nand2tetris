@@ -1,0 +1,34 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/Register.hdl
+
+/**
+ * 16-bit register:
+ * If load[t] == 1 then out[t+1] = in[t]
+ * else out does not change
+ */
+
+CHIP Register {
+    IN in[16], load;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    Bit(out=out[0],in=in[0],load=load);
+    Bit(out=out[1],in=in[1],load=load);
+    Bit(out=out[2],in=in[2],load=load);
+    Bit(out=out[3],in=in[3],load=load);
+    Bit(out=out[4],in=in[4],load=load);
+    Bit(out=out[5],in=in[5],load=load);
+    Bit(out=out[6],in=in[6],load=load);
+    Bit(out=out[7],in=in[7],load=load);
+    Bit(out=out[8],in=in[8],load=load);
+    Bit(out=out[9],in=in[9],load=load);
+    Bit(out=out[10],in=in[10],load=load);
+    Bit(out=out[11],in=in[11],load=load);
+    Bit(out=out[12],in=in[12],load=load);
+    Bit(out=out[13],in=in[13],load=load);
+    Bit(out=out[14],in=in[14],load=load);
+    Bit(out=out[15],in=in[15],load=load);
+}
