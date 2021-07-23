@@ -1,0 +1,184 @@
+#! /usr/bin/tclsh
+
+set infile [lindex $argv 0]
+set outfile [lindex $argv 1]
+
+set fdin [open $infile "r"]
+set fdout [open $outfile "w"]
+
+set symbols(R0) 0
+set avail_address 16
+
+proc initialize_symbols {} {
+     global symbols
+     for {set i 0} {$i < 16} {incr i} {
+         set symbols(R$i) $i
+     }
+     set symbols(SP) 0
+     set symbols(LCL) 1
+     set symbols(ARG) 2
+     set symbols(THIS) 3
+     set symbols(THAT) 4
+     set symbols(SCREEN) 16384
+     set symbols(KBD) 24576
+}
+
+proc add_symbol {sym_name address} {
+     global symbols
+     set symbols($sym_name) $address
+}
+
+proc contains {sym_name} {
+     global symbols
+     if { $sym_name ni [array names symbols]} {
+        return 0
+     } else {
+        return 1
+     }
+}
+
+proc getaddress {sym_name} {
+     global symbols 
+     return $symbols($sym_name)
+}
+
+proc remove_space {arg} {
+     
+     set len [string length $arg]
+     for {set i 0} {$i < $len} {incr i} {
+         if {[string match [string index $arg $i] " "]} {
+            set arg [string replace $arg $i $i]
+            set len [expr $len - 1]
+         }
+     }
+     return $arg
+}
+
+proc remove_M {arg} {
+     for {set i 0} {$i < [string length $arg]} {incr i} {
+         if {[string match [string index $arg $i] "M"]} {
+            set arg [string replace $arg $i $i "A"]
+         }
+      }
+      return $arg
+}
+
+proc code {command} {
+     if { [string match "*=*" $command]} {
+       if { [string match "*;*" $command]} {
+           set computation [remove_space [string trim [string range $command [string first "=" $command]+1 [string first ";" $command]-1]]]
+        } else {
+           set computation [remove_space [string trim [string range $command [string first "=" $command]+1 end]]]
+          }
+     } else {
+        if { [string match "*;*" $command] } {
+           set computation [remove_space [string trim [string range $command 0 [string first ";" $command]-1]]]
+        } else {
+           set computation [remove_space [string trim [string range $command 0 end]]]
+          }   
+       }
+     set a [expr [string match *M* $computation]?1:0]     
+     set computation [remove_M $computation]     
+
+     switch $computation {
+            0 { set c "101010"}
+            1 { set c "111111"}
+           -1 { set c "111010"}
+            D { set c "001100"}
+            A { set c "110000"}
+           !D { set c "001101"}
+           !A { set c "110001"}
+           -D { set c "001111"}
+           -A { set c "110011"}
+          D+1 { set c "011111"}
+          A+1 { set c "110111"}
+          D-1 { set c "001110"}
+          A-1 { set c "110010"}
+          D+A { set c "000010"}
+          D-A { set c "010011"}
+          A-D { set c "000111"}
+          D&A { set c "000000"}
+          D|A { set c "010101"}
+      default { set c "001100"}
+     }       
+     return [remove_space [concat $a $c]]
+
+}
+
+proc jump {command} {
+     set jmp_typ [string trim [string range $command [string first ";" $command]+1 end]]
+     switch $jmp_typ {
+            JGT { return "001"}
+            JEQ { return "010"}
+            JGE { return "011"}
+            JLT { return "100"}
+            JNE { return "101"}
+            JLE { return "110"}
+            JMP { return "111"}
+        default { return "000"}
+     }
+}   
+
+proc dest {command} {
+     set destination [string trim [string range $command 0 [expr [string first "=" $command]-1]]]
+     return [string replace [string replace [concat [expr [string match "*A*" $destination]?1:0] [expr [string match "*D*" $destination]?1:0] [expr [string match "*M*" $destination]?1:0]] 1 1] 2 2]
+}
+
+proc append0 {dec_num} {
+     set bin_num [format "%b" $dec_num]
+     while {[string length $bin_num] < 15} {
+           set bin_num [remove_space [concat 0 $bin_num]]
+     }
+     return $bin_num
+}
+
+proc assemble_binary {assembly_command} {
+     global avail_address
+     set address $avail_address
+     set first_letter [string index $assembly_command 0]
+     switch $first_letter {
+            "@" { set sym_or_dec [string range $assembly_command 1 end]
+                  if {![string is integer $sym_or_dec]} {
+                     if { [contains $sym_or_dec]} {
+                        return [remove_space [concat "0" [append0 [getaddress $sym_or_dec]]]]
+                     } else {
+                        add_symbol $sym_or_dec [expr $address]
+                        incr avail_address
+                        return [remove_space [concat "0" [append0 [expr $address]]]]
+                       }
+                  } else {
+                     return [remove_space [concat "0" [append0 [string replace $assembly_command 0 0]]]]
+                    }
+                }
+        default {return [remove_space [concat "111" [code $assembly_command] [dest $assembly_command] [jump $assembly_command]]]}
+     }
+}
+
+initialize_symbols
+
+set i 0
+while { ![eof $fdin]} {
+      set line [string trim [gets $fdin]]
+      set first_letter [string index $line 0]
+      if {[string equal $first_letter "("]} {
+         add_symbol [remove_space [string range $line 1 end-1]] [expr $i]
+      }
+      if {![string equal $first_letter "("] &&  ![string match "//" [string range $line 0 1]] && ![string equal "" $line] } { 
+         incr i
+      }
+}
+
+seek $fdin 0 start
+
+while { ![eof $fdin]} {
+      set line [string trim [gets $fdin]]
+      if { [string first "//" $line] != -1} {
+         set line [string trim [string replace $line [string first "//" $line] end]]
+      }
+      if { ![string match "//" [string range $line 0 1]] && ![string equal "" $line] && ![string match [string index $line 0] "("]} {
+         puts $fdout [assemble_binary $line]
+      }
+}
+
+close $fdin
+close $fdout
