@@ -1,0 +1,101 @@
+ProgramFlow/FibonacciSeries/FibonacciSeries.vm
+// This file is part of www.nand2tetris.org
+Within if condition for comments
+// and the book "The Elements of Computing Systems"
+Within if condition for comments
+// by Nisan and Schocken, MIT Press.
+Within if condition for comments
+// File name: projects/08/ProgramFlow/FibonacciSeries/FibonacciSeries.vm
+Within if condition for comments
+
+Within if condition for comments
+// Puts the first argument[0] elements of the Fibonacci series
+Within if condition for comments
+// in the memory, starting in the address given in argument[1].
+Within if condition for comments
+// Argument[0] and argument[1] are initialized by the test script 
+Within if condition for comments
+// before this code starts running.
+Within if condition for comments
+
+Within if condition for comments
+push argument 1
+Push/Pop command
+pop pointer 1           // that = argument[1]
+Push/Pop command
+
+Within if condition for comments
+push constant 0
+Push/Pop command
+pop that 0              // first element = 0
+Push/Pop command
+push constant 1
+Push/Pop command
+pop that 1              // second element = 1
+Push/Pop command
+
+Within if condition for comments
+push argument 0
+Push/Pop command
+push constant 2
+Push/Pop command
+sub
+Arithmetic command
+pop argument 0          // num_of_elements -= 2 (first 2 elements are set)
+Push/Pop command
+
+Within if condition for comments
+label MAIN_LOOP_START
+Label command
+
+Within if condition for comments
+push argument 0
+Push/Pop command
+if-goto COMPUTE_ELEMENT // if num_of_elements > 0, goto COMPUTE_ELEMENT
+If-Goto command
+goto END_PROGRAM        // otherwise, goto END_PROGRAM
+Goto command
+
+Within if condition for comments
+label COMPUTE_ELEMENT
+Label command
+
+Within if condition for comments
+push that 0
+Push/Pop command
+push that 1
+Push/Pop command
+add
+Arithmetic command
+pop that 2              // that[2] = that[0] + that[1]
+Push/Pop command
+
+Within if condition for comments
+push pointer 1
+Push/Pop command
+push constant 1
+Push/Pop command
+add
+Arithmetic command
+pop pointer 1           // that += 1
+Push/Pop command
+
+Within if condition for comments
+push argument 0
+Push/Pop command
+push constant 1
+Push/Pop command
+sub
+Arithmetic command
+pop argument 0          // num_of_elements--
+Push/Pop command
+
+Within if condition for comments
+goto MAIN_LOOP_START
+Goto command
+
+Within if condition for comments
+label END_PROGRAM
+Label command
+
+Within if condition for comments
